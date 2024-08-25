@@ -1,0 +1,16 @@
+[package]
+name = "zk_payment"
+version = "1.0.0"
+authors = ["tx-tomcat"]
+
+[addresses]
+zk_payment = "0x1"
+
+[dev-addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "testnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]
