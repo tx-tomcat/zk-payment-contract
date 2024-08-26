@@ -25,7 +25,7 @@ module zk_payment::market {
         payment_method: string::String,
     }
 
-    struct Order<phantom CoinType> has store{
+    struct Order<phantom CoinType> has store {
         id: u64,
         buyer: address,
         crypto_amount: u64,
@@ -40,7 +40,9 @@ module zk_payment::market {
         next_order_id: u64,
     }
 
-    public fun initialize<CoinType>(
+    struct AdminCapability has key, store {}
+
+    public fun create_pool<CoinType>(
         account: &signer,
         fiat_currency: string::String,
         fiat_price_per_crypto: u64,
@@ -52,7 +54,11 @@ module zk_payment::market {
             fiat_price_per_crypto,
             payment_method,
         });
+    }
 
+    fun init_module<CoinType>(
+        account: &signer,
+    ) {
         move_to(account, OrderBook<CoinType> {
             orders: table::new(),
             next_order_id: 0,
@@ -143,13 +149,8 @@ module zk_payment::market {
     fun verify_zk_proof<CoinType>(proof: vector<u8>, order: &Order<CoinType>): bool {
         // Implement ZK proof verification logic
         // This function should verify that the buyer has made the fiat payment
-        // The proof should demonstrate knowledge of the TLS session key 
+        // The proof should demonstrate knowledge of the TLS session key
         // and the correct payment details matching the order
         true // Placeholder
-    }
-
-    #[test_only]
-    public fun initialize_for_testing<CoinType>(account: &signer) {
-        initialize<CoinType>(account, string::utf8(b"USD"), 1000, string::utf8(b"SWIFT"));
     }
 }
