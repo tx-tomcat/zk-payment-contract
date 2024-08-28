@@ -21,7 +21,6 @@ module zk_payment::market {
     struct LiquidityPool<phantom CoinType> has key {
         balance: Coin<CoinType>,
         fiat_currency: string::String,
-        fiat_price_per_crypto: u64,
         payment_method: string::String,
     }
 
@@ -29,7 +28,7 @@ module zk_payment::market {
         id: u64,
         buyer: address,
         crypto_amount: u64,
-        fiat_amount: u64,
+        fiat_price_per_crypto: u64,
         status: u8,
         timestamp: u64,
         locked_funds: Coin<CoinType>,
@@ -45,13 +44,11 @@ module zk_payment::market {
     public fun create_pool<CoinType>(
         account: &signer,
         fiat_currency: string::String,
-        fiat_price_per_crypto: u64,
         payment_method: string::String
     ) {
         move_to(account, LiquidityPool<CoinType> {
             balance: coin::zero<CoinType>(),
             fiat_currency,
-            fiat_price_per_crypto,
             payment_method,
         });
     }
@@ -80,7 +77,8 @@ module zk_payment::market {
 
     public fun create_buy_order<CoinType>(
         account: &signer,
-        crypto_amount: u64
+        crypto_amount: u64,
+        fiat_price_per_crypto: u64
     ) acquires LiquidityPool, OrderBook {
         let pool = borrow_global_mut<LiquidityPool<CoinType>>(@zk_payment);
         assert!(coin::value(&pool.balance) >= crypto_amount, ERROR_INSUFFICIENT_BALANCE);
@@ -89,7 +87,6 @@ module zk_payment::market {
         let order_id = orderbook.next_order_id;
         orderbook.next_order_id = order_id + 1;
 
-        let fiat_amount = crypto_amount * pool.fiat_price_per_crypto;
 
         // Lock the funds from the liquidity pool
         let locked_funds = coin::extract(&mut pool.balance, crypto_amount);
@@ -98,7 +95,7 @@ module zk_payment::market {
             id: order_id,
             buyer: signer::address_of(account),
             crypto_amount,
-            fiat_amount,
+            fiat_price_per_crypto,
             status: ORDER_STATUS_OPEN,
             timestamp: timestamp::now_seconds(),
             locked_funds,
